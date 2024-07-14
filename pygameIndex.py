@@ -237,10 +237,44 @@ def create_multiple_enemies(num_enemies):
     for _ in range(num_enemies):
         create_enemy()
 
+def show_start_screen():
+    while True:
+        screen.fill(WHITE)
+        title_text = font.render("FantasyMichiHats", True, BLACK)
+        screen.blit(title_text, (SCREEN_WIDTH // 2 - title_text.get_width() // 2, 100))
+
+        play_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, 250, 200, 50)
+        exit_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, 350, 200, 50)
+
+        pygame.draw.rect(screen, BLACK, play_button)
+        pygame.draw.rect(screen, BLACK, exit_button)
+
+        play_text = font.render("Iniciar Juego", True, WHITE)
+        exit_text = font.render("Salir", True, WHITE)
+
+        screen.blit(play_text, (play_button.x + play_button.width // 2 - play_text.get_width() // 2, play_button.y + 10))
+        screen.blit(exit_text, (exit_button.x + play_button.width // 2 - exit_text.get_width() // 2, exit_button.y + 10))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if play_button.collidepoint(event.pos):
+                    return  # Empezar el juego
+                if exit_button.collidepoint(event.pos):
+                    pygame.quit()
+                    sys.exit()
+
+        pygame.display.flip()
+
 def main():
     global last_enemy_spawn_time, enemies_defeated
     clock = pygame.time.Clock()
     player_name = "Michi"
+
+    # Mostrar pantalla de inicio
+    show_start_screen()
 
     # Seleccionar clase
     select_class()

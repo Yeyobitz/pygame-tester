@@ -25,13 +25,23 @@ warrior_image = pygame.image.load('warrior.png')
 mage_image = pygame.image.load('mage.png')
 archer_image = pygame.image.load('archer.png')
 equipments = {
-    "Espada": pygame.image.load('sword.png'),
-    "Báculo": pygame.image.load('staff.png'),
-    "Arco": pygame.image.load('bow.png')
+    "Casco 1": pygame.image.load('helmet1.png'),
+    "Casco 2": pygame.image.load('helmet2.png'),
+    "Casco 3": pygame.image.load('helmet3.png'),
+    "Capa 1": pygame.image.load('cape1.png'),
+    "Capa 2": pygame.image.load('cape2.png'),
+    "Capa 3": pygame.image.load('cape3.png'),
+    "Gorro 1": pygame.image.load('hat1.png'),
+    "Gorro 2": pygame.image.load('hat2.png'),
+    "Gorro 3": pygame.image.load('hat3.png')
 }
 tower_image = pygame.image.load('tower.png')
 enemy_image = pygame.image.load('enemy.png')
-background_image = pygame.image.load('background.png')
+background_images = [
+    pygame.image.load('background1.png'),
+    pygame.image.load('background2.png'),
+    pygame.image.load('background3.png')
+]
 projectile_images = {
     "Espada": pygame.image.load('projectile_sword.png'),
     "Báculo": pygame.image.load('projectile_staff.png'),
@@ -50,6 +60,7 @@ enemies = []
 projectiles = []
 selected_class = None
 selected_equipment = None
+current_map = 0
 enemy_spawn_time = 2000  # Tiempo en milisegundos entre oleadas de enemigos
 last_enemy_spawn_time = pygame.time.get_ticks()
 experience_needed = 100
@@ -72,16 +83,16 @@ class Character:
     def draw(self, screen):
         screen.blit(self.image, self.rect.topleft)
         if self.equipment:
-            screen.blit(self.equipment, (self.rect.x + 50, self.rect.y))
+            screen.blit(equipments[self.equipment], (self.rect.x + 50, self.rect.y))
 
     def shoot(self):
         if enemies:
             closest_enemy = min(enemies, key=lambda enemy: math.hypot(enemy.rect.x - self.rect.x, enemy.rect.y - self.rect.y))
-            if self.equipment == equipments["Espada"]:
+            if self.equipment in ["Casco 1", "Casco 2", "Casco 3"]:
                 projectile_image = projectile_images["Espada"]
-            elif self.equipment == equipments["Báculo"]:
+            elif self.equipment in ["Capa 1", "Capa 2", "Capa 3"]:
                 projectile_image = projectile_images["Báculo"]
-            elif self.equipment == equipments["Arco"]:
+            elif self.equipment in ["Gorro 1", "Gorro 2", "Gorro 3"]:
                 projectile_image = projectile_images["Arco"]
             new_projectile = Projectile(self.rect.centerx, self.rect.top, projectile_image, closest_enemy)
             projectiles.append(new_projectile)
@@ -212,20 +223,53 @@ def select_equipment():
         screen.blit(menu_background_image, (0, 0))  # Dibujar la imagen de fondo del menú
         draw_text("Selecciona un equipamiento:", font, BLACK, screen, 20, 20)
         if selected_class == "Guerrero":
-            draw_text("1. Espada", font, BLACK, screen, 20, 60)
+            draw_text("1. Casco 1", font, BLACK, screen, 20, 60)
+            draw_text("2. Casco 2", font, BLACK, screen, 20, 100)
+            draw_text("3. Casco 3", font, BLACK, screen, 20, 140)
         elif selected_class == "Mago":
-            draw_text("1. Báculo", font, BLACK, screen, 20, 60)
+            draw_text("1. Capa 1", font, BLACK, screen, 20, 60)
+            draw_text("2. Capa 2", font, BLACK, screen, 20, 100)
+            draw_text("3. Capa 3", font, BLACK, screen, 20, 140)
         elif selected_class == "Arquero":
-            draw_text("1. Arco", font, BLACK, screen, 20, 60)
+            draw_text("1. Gorro 1", font, BLACK, screen, 20, 60)
+            draw_text("2. Gorro 2", font, BLACK, screen, 20, 100)
+            draw_text("3. Gorro 3", font, BLACK, screen, 20, 140)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_1:
-                    selected_equipment = equipments.get("Espada" if selected_class == "Guerrero" else "Báculo" if selected_class == "Mago" else "Arco")
-                    running = False
+                if selected_class == "Guerrero":
+                    if event.key == pygame.K_1:
+                        selected_equipment = "Casco 1"
+                        running = False
+                    elif event.key == pygame.K_2:
+                        selected_equipment = "Casco 2"
+                        running = False
+                    elif event.key == pygame.K_3:
+                        selected_equipment = "Casco 3"
+                        running = False
+                elif selected_class == "Mago":
+                    if event.key == pygame.K_1:
+                        selected_equipment = "Capa 1"
+                        running = False
+                    elif event.key == pygame.K_2:
+                        selected_equipment = "Capa 2"
+                        running = False
+                    elif event.key == pygame.K_3:
+                        selected_equipment = "Capa 3"
+                        running = False
+                elif selected_class == "Arquero":
+                    if event.key == pygame.K_1:
+                        selected_equipment = "Gorro 1"
+                        running = False
+                    elif event.key == pygame.K_2:
+                        selected_equipment = "Gorro 2"
+                        running = False
+                    elif event.key == pygame.K_3:
+                        selected_equipment = "Gorro 3"
+                        running = False
 
         pygame.display.flip()
 
@@ -253,7 +297,7 @@ def show_start_screen():
         exit_text = font.render("Salir", True, WHITE)
 
         screen.blit(play_text, (play_button.x + play_button.width // 2 - play_text.get_width() // 2, play_button.y + 10))
-        screen.blit(exit_text, (exit_button.x + play_button.width // 2 - exit_text.get_width() // 2, exit_button.y + 10))
+        screen.blit(exit_text, (exit_button.x + exit_button.width // 2 - exit_text.get_width() // 2, exit_button.y + 10))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -268,13 +312,61 @@ def show_start_screen():
 
         pygame.display.flip()
 
+def get_player_name():
+    input_box = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2, 200, 50)
+    color_inactive = pygame.Color('lightskyblue3')
+    color_active = pygame.Color('dodgerblue2')
+    color = color_inactive
+    active = False
+    text = ''
+    done = False
+
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if input_box.collidepoint(event.pos):
+                    active = not active
+                else:
+                    active = False
+                color = color_active if active else color_inactive
+            if event.type == pygame.KEYDOWN:
+                if active:
+                    if event.key == pygame.K_RETURN:
+                        return text
+                    elif event.key == pygame.K_BACKSPACE:
+                        text = text[:-1]
+                    else:
+                        text += event.unicode
+        
+        screen.fill(WHITE)
+        draw_text("Ingrese su nombre de jugador:", font, BLACK, screen, SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 - 50)
+        txt_surface = font.render(text, True, color)
+        width = max(200, txt_surface.get_width() + 10)
+        input_box.w = width
+        screen.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
+        pygame.draw.rect(screen, color, input_box, 2)
+        
+        pygame.display.flip()
+        pygame.time.Clock().tick(30)
+
+def switch_map():
+    global current_map, enemies, projectiles
+    current_map = (current_map + 1) % len(background_images)
+    enemies = []
+    projectiles = []
+
 def main():
-    global last_enemy_spawn_time, enemies_defeated
+    global last_enemy_spawn_time, enemies_defeated, enemies_escaped
     clock = pygame.time.Clock()
-    player_name = "Michi"
 
     # Mostrar pantalla de inicio
     show_start_screen()
+
+    # Obtener el nombre del jugador
+    player_name = get_player_name()
 
     # Seleccionar clase
     select_class()
@@ -304,7 +396,7 @@ def main():
                     characters[0].shoot()
         
         # Dibujar fondo
-        screen.blit(background_image, (0, 0))
+        screen.blit(background_images[current_map], (0, 0))
 
         # Dibujar y atacar con torres
         for tower in towers:
@@ -338,9 +430,9 @@ def main():
         if enemies_defeated >= win_condition:
             draw_text("¡Victoria!", font, BLACK, screen, SCREEN_WIDTH // 2 - 50, SCREEN_HEIGHT // 2)
             pygame.display.flip()
-            pygame.time.wait(3000)  # Espera 3 segundos antes de salir
-            pygame.quit()
-            sys.exit()
+            pygame.time.wait(3000)  # Espera 3 segundos antes de cambiar el mapa
+            enemies_defeated = 0
+            switch_map()
 
         # Verificar condición de derrota
         if enemies_escaped >= lost_condition:
@@ -355,3 +447,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

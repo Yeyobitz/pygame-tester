@@ -2,6 +2,8 @@ import pygame
 import sys
 import random
 import math
+import sqlite3
+from datetime import datetime
 
 # Inicializar Pygame
 pygame.init()
@@ -53,6 +55,90 @@ menu_background_image = pygame.image.load('menu_background.png')  # Cargar la im
 pygame.mixer.music.load('background_music.mp3')
 pygame.mixer.music.play(-1)  # Reproduce la música en bucle
 
+# Conectar a la base de datos SQLite
+try:
+    conn = sqlite3.connect('game_data.db')
+    c = conn.cursor()
+    print("Conexión a la base de datos SQLite establecida.")
+except sqlite3.Error as e:
+    print(f"Error al conectar con la base de datos: {e}")
+
+# Crear tablas si no existen
+c.execute('''
+CREATE TABLE IF NOT EXISTS User (
+    user_id INTEGER PRIMARY KEY,
+    username TEXT UNIQUE,
+    password TEXT,
+    email TEXT,
+    created_at TIMESTAMP
+)
+''')
+c.execute('''
+CREATE TABLE IF NOT EXISTS Character (
+    character_id INTEGER PRIMARY KEY,
+    user_id INTEGER,
+    name TEXT,
+    class TEXT,
+    level INTEGER,
+    experience INTEGER,
+    created_at TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES User(user_id)
+)
+''')
+c.execute('''
+CREATE TABLE IF NOT EXISTS Game (
+    game_id INTEGER PRIMARY KEY,
+    character_id INTEGER,
+    current_level INTEGER,
+    current_score INTEGER,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    FOREIGN KEY (character_id) REFERENCES Character(character_id)
+)
+''')
+c.execute('''
+CREATE TABLE IF NOT EXISTS Hat (
+    hat_id INTEGER PRIMARY KEY,
+    name TEXT,
+    description TEXT,
+    class TEXT,
+    image_url TEXT
+)
+''')
+c.execute('''
+CREATE TABLE IF NOT EXISTS Tower (
+    tower_id INTEGER PRIMARY KEY,
+    name TEXT,
+    description TEXT,
+    level INTEGER,
+    damage INTEGER,
+    range INTEGER,
+    image_url TEXT
+)
+''')
+c.execute('''
+CREATE TABLE IF NOT EXISTS Character_Inventory (
+    inventory_id INTEGER PRIMARY KEY,
+    character_id INTEGER,
+    hat_id INTEGER,
+    FOREIGN KEY (character_id) REFERENCES Character(character_id),
+    FOREIGN KEY (hat_id) REFERENCES Hat(hat_id)
+)
+''')
+c.execute('''
+CREATE TABLE IF NOT EXISTS Level_Progression (
+    progression_id INTEGER PRIMARY KEY,
+    character_id INTEGER,
+    tower_id INTEGER,
+    level INTEGER,
+    experience INTEGER,
+    FOREIGN KEY (character_id) REFERENCES Character(character_id),
+    FOREIGN KEY (tower_id) REFERENCES Tower(tower_id)
+)
+''')
+conn.commit()
+print("Tablas creadas o verificadas.")
+
 # Variables del juego
 characters = []
 towers = []
@@ -71,7 +157,7 @@ lost_condition = 10  # Cantidad de enemigos que deben escapar para perder el niv
 
 # Clases
 class Character:
-    def __init__(self, name, char_class, image, equipment):
+    def __init__(self, name, char_class, image, equipment, character_id=None):
         self.name = name
         self.char_class = char_class
         self.image = image
@@ -79,6 +165,7 @@ class Character:
         self.level = 1
         self.experience = 0
         self.rect = self.image.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+        self.character_id = character_id
 
     def draw(self, screen):
         screen.blit(self.image, self.rect.topleft)
@@ -107,6 +194,11 @@ class Character:
         self.experience = 0
         print(f"{self.name} ha subido al nivel {self.level}!")
         create_multiple_enemies(self.level)  # Crear múltiples enemigos cuando el personaje sube de nivel
+        # Actualizar el nivel del personaje en la base de datos
+        c.execute('UPDATE Character SET level = ?, experience = ? WHERE character_id = ?', 
+                  (self.level, self.experience, self.character_id))
+        conn.commit()
+        print(f"Nivel del personaje {self.name} actualizado en la base de datos.")
 
 class Tower:
     def __init__(self, x, y):
@@ -180,8 +272,14 @@ def create_character(name, char_class, equipment):
         char_image = mage_image
     elif char_class == "Arquero":
         char_image = archer_image
-    new_character = Character(name, char_class, char_image, equipment)
+    # Insertar el personaje en la base de datos
+    c.execute('INSERT INTO Character (user_id, name, class, level, experience, created_at) VALUES (?, ?, ?, ?, ?, ?)', 
+              (1, name, char_class, 1, 0, datetime.now()))
+    conn.commit()
+    character_id = c.lastrowid
+    new_character = Character(name, char_class, char_image, equipment, character_id)
     characters.append(new_character)
+    print(f"Personaje {name} creado e insertado en la base de datos con ID {character_id}.")
 
 def draw_text(text, font, color, surface, x, y):
     textobj = font.render(text, True, color)
@@ -289,14 +387,124 @@ def show_start_screen():
 
         play_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, 250, 200, 50)
         exit_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, 350, 200, 50)
+        register_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, 150, 200, 50)  # Botón de registro
 
         pygame.draw.rect(screen, BLACK, play_button)
         pygame.draw.rect(screen, BLACK, exit_button)
+        pygame.draw.rect(screen, BLACK, register_button)  # Dibujar el botón de registro
 
-        play_text = font.render("Iniciar Juego", True, WHITE)
+        play_text = font.render("Iniciar Sesión", True, WHITE)
+        exit_text = font.render("Salir", True, WHITE)
+        register_text = font.render("Registrar", True, WHITE)  # Texto del botón de registro
+
+        screen.blit(play_text, (play_button.x + play_button.width // 2 - play_text.get_width() // 2, play_button.y + 10))
+        screen.blit(exit_text, (exit_button.x + exit_button.width // 2 - exit_text.get_width() // 2, exit_button.y + 10))
+        screen.blit(register_text, (register_button.x + register_button.width // 2 - register_text.get_width() // 2, register_button.y + 10))  # Mostrar el texto de registro
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if play_button.collidepoint(event.pos):
+                    login_screen()  # Ir a la pantalla de inicio de sesión
+                if register_button.collidepoint(event.pos):
+                    register_screen()  # Ir a la pantalla de registro
+                if exit_button.collidepoint(event.pos):
+                    pygame.quit()
+                    sys.exit()
+
+        pygame.display.flip()
+
+def get_input_text(prompt):
+    input_box = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2, 200, 50)
+    color_inactive = pygame.Color('lightskyblue3')
+    color_active = pygame.Color('dodgerblue2')
+    color = color_inactive
+    active = False
+    text = ''
+    done = False
+
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if input_box.collidepoint(event.pos):
+                    active = not active
+                else:
+                    active = False
+                color = color_active if active else color_inactive
+            if event.type == pygame.KEYDOWN:
+                if active:
+                    if event.key == pygame.K_RETURN:
+                        return text
+                    elif event.key == pygame.K_BACKSPACE:
+                        text = text[:-1]
+                    else:
+                        text += event.unicode
+        
+        screen.fill(WHITE)
+        draw_text(prompt, font, BLACK, screen, SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 - 50)
+        txt_surface = font.render(text, True, color)
+        width = max(200, txt_surface.get_width() + 10)
+        input_box.w = width
+        screen.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
+        pygame.draw.rect(screen, color, input_box, 2)
+        
+        pygame.display.flip()
+        pygame.time.Clock().tick(30)
+
+def register_screen():
+    username = get_input_text("Ingrese nombre de usuario:")
+    password = get_input_text("Ingrese contraseña:")
+    email = get_input_text("Ingrese email:")
+
+    try:
+        c.execute('INSERT INTO User (username, password, email, created_at) VALUES (?, ?, ?, ?)', 
+                  (username, password, email, datetime.now()))
+        conn.commit()
+        print(f"Usuario {username} registrado correctamente.")
+        login_screen()  # Ir a la pantalla de inicio de sesión después de registrar
+    except sqlite3.IntegrityError:
+        print(f"El nombre de usuario {username} ya existe.")
+        register_screen()  # Volver a intentar el registro si el nombre de usuario ya existe
+
+def login_screen():
+    username = get_input_text("Ingrese nombre de usuario:")
+    password = get_input_text("Ingrese contraseña:")
+
+    c.execute('SELECT user_id FROM User WHERE username = ? AND password = ?', (username, password))
+    user = c.fetchone()
+
+    if user:
+        print(f"Usuario {username} ha iniciado sesión correctamente.")
+        main_menu(user[0])
+    else:
+        print("Nombre de usuario o contraseña incorrectos.")
+        login_screen()  # Volver a intentar el inicio de sesión si los datos son incorrectos
+
+def main_menu(user_id):
+    while True:
+        screen.fill(WHITE)
+        title_text = font.render("Main Menu", True, BLACK)
+        screen.blit(title_text, (SCREEN_WIDTH // 2 - title_text.get_width() // 2, 100))
+
+        play_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, 250, 200, 50)
+        modify_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, 350, 200, 50)
+        exit_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, 450, 200, 50)
+
+        pygame.draw.rect(screen, BLACK, play_button)
+        pygame.draw.rect(screen, BLACK, modify_button)
+        pygame.draw.rect(screen, BLACK, exit_button)
+
+        play_text = font.render("Jugar", True, WHITE)
+        modify_text = font.render("Modificar Cuenta", True, WHITE)
         exit_text = font.render("Salir", True, WHITE)
 
         screen.blit(play_text, (play_button.x + play_button.width // 2 - play_text.get_width() // 2, play_button.y + 10))
+        screen.blit(modify_text, (modify_button.x + modify_button.width // 2 - modify_text.get_width() // 2, modify_button.y + 10))
         screen.blit(exit_text, (exit_button.x + exit_button.width // 2 - exit_text.get_width() // 2, exit_button.y + 10))
 
         for event in pygame.event.get():
@@ -305,12 +513,23 @@ def show_start_screen():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if play_button.collidepoint(event.pos):
-                    return  # Empezar el juego
+                    main(user_id)  # Iniciar el juego
+                if modify_button.collidepoint(event.pos):
+                    modify_account_screen(user_id)  # Modificar cuenta
                 if exit_button.collidepoint(event.pos):
                     pygame.quit()
                     sys.exit()
 
         pygame.display.flip()
+
+def modify_account_screen(user_id):
+    new_password = get_input_text("Ingrese nueva contraseña:")
+    new_email = get_input_text("Ingrese nuevo email:")
+
+    c.execute('UPDATE User SET password = ?, email = ? WHERE user_id = ?', (new_password, new_email, user_id))
+    conn.commit()
+    print(f"Datos de la cuenta actualizados correctamente para el usuario con ID {user_id}.")
+    main_menu(user_id)  # Volver al menú principal después de modificar la cuenta
 
 def get_player_name():
     input_box = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2, 200, 50)
@@ -358,12 +577,9 @@ def switch_map():
     enemies = []
     projectiles = []
 
-def main():
+def main(user_id):
     global last_enemy_spawn_time, enemies_defeated, enemies_escaped
     clock = pygame.time.Clock()
-
-    # Mostrar pantalla de inicio
-    show_start_screen()
 
     # Obtener el nombre del jugador
     player_name = get_player_name()
@@ -446,5 +662,5 @@ def main():
         clock.tick(60)
 
 if __name__ == "__main__":
-    main()
+    show_start_screen()
 

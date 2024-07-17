@@ -2,7 +2,7 @@ import pygame
 import sys
 import random
 import math
-import sqlite3
+import sqlite3 # conexion desde pygame a la base de datos
 from datetime import datetime
 
 # Inicializar Pygame
@@ -657,6 +657,7 @@ def main(user_id):
             pygame.time.wait(3000)  # Espera 3 segundos antes de salir
             pygame.quit()
             sys.exit()
+        
         
         pygame.display.flip()
         clock.tick(60)

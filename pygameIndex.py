@@ -1,5 +1,6 @@
 import pygame
 import sys
+import os
 import random
 import math
 import sqlite3 # conexion desde pygame a la base de datos
@@ -21,47 +22,51 @@ BLACK = (0, 0, 0)
 # Fuentes
 font = pygame.font.SysFont(None, 36)
 
+# Determinar la ruta base
+base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+
 # Cargar imágenes
-cat_image = pygame.image.load('cat.png')
-warrior_image = pygame.image.load('warrior.png')
-mage_image = pygame.image.load('mage.png')
-archer_image = pygame.image.load('archer.png')
+cat_image = pygame.image.load(os.path.join(base_path, 'cat.png'))
+warrior_image = pygame.image.load(os.path.join(base_path, 'warrior.png'))
+mage_image = pygame.image.load(os.path.join(base_path, 'mage.png'))
+archer_image = pygame.image.load(os.path.join(base_path, 'archer.png'))
 equipments = {
-    "Casco 1": pygame.image.load('helmet1.png'),
-    "Casco 2": pygame.image.load('helmet2.png'),
-    "Casco 3": pygame.image.load('helmet3.png'),
-    "Capa 1": pygame.image.load('cape1.png'),
-    "Capa 2": pygame.image.load('cape2.png'),
-    "Capa 3": pygame.image.load('cape3.png'),
-    "Gorro 1": pygame.image.load('hat1.png'),
-    "Gorro 2": pygame.image.load('hat2.png'),
-    "Gorro 3": pygame.image.load('hat3.png')
+    "Casco 1": pygame.image.load(os.path.join(base_path, 'helmet1.png')),
+    "Casco 2": pygame.image.load(os.path.join(base_path, 'helmet2.png')),
+    "Casco 3": pygame.image.load(os.path.join(base_path, 'helmet3.png')),
+    "Capa 1": pygame.image.load(os.path.join(base_path, 'cape1.png')),
+    "Capa 2": pygame.image.load(os.path.join(base_path, 'cape2.png')),
+    "Capa 3": pygame.image.load(os.path.join(base_path, 'cape3.png')),
+    "Gorro 1": pygame.image.load(os.path.join(base_path, 'hat1.png')),
+    "Gorro 2": pygame.image.load(os.path.join(base_path, 'hat2.png')),
+    "Gorro 3": pygame.image.load(os.path.join(base_path, 'hat3.png'))
 }
-tower_image = pygame.image.load('tower.png')
-enemy_image = pygame.image.load('enemy.png')
+tower_image = pygame.image.load(os.path.join(base_path, 'tower.png'))
+enemy_image = pygame.image.load(os.path.join(base_path, 'enemy.png'))
 background_images = [
-    pygame.image.load('background1.png'),
-    pygame.image.load('background2.png'),
-    pygame.image.load('background3.png')
+    pygame.image.load(os.path.join(base_path, 'background1.png')),
+    pygame.image.load(os.path.join(base_path, 'background2.png')),
+    pygame.image.load(os.path.join(base_path, 'background3.png'))
 ]
 projectile_images = {
-    "Espada": pygame.image.load('projectile_sword.png'),
-    "Báculo": pygame.image.load('projectile_staff.png'),
-    "Arco": pygame.image.load('projectile_bow.png')
+    "Espada": pygame.image.load(os.path.join(base_path, 'projectile_sword.png')),
+    "Báculo": pygame.image.load(os.path.join(base_path, 'projectile_staff.png')),
+    "Arco": pygame.image.load(os.path.join(base_path, 'projectile_bow.png'))
 }
-menu_background_image = pygame.image.load('menu_background.png')  # Cargar la imagen de fondo del menú
+menu_background_image = pygame.image.load(os.path.join(base_path, 'menu_background.png'))  # Cargar la imagen de fondo del menú
 
 # Cargar música de fondo
-pygame.mixer.music.load('background_music.mp3')
+pygame.mixer.music.load(os.path.join(base_path, 'background_music.mp3'))
 pygame.mixer.music.play(-1)  # Reproduce la música en bucle
 
 # Conectar a la base de datos SQLite
 try:
-    conn = sqlite3.connect('game_data.db')
+    conn = sqlite3.connect(os.path.join(base_path, 'game_data.db'))
     c = conn.cursor()
     print("Conexión a la base de datos SQLite establecida.")
 except sqlite3.Error as e:
-    print(f"Error al conectar con la base de datos: {e}")
+    print(f"Error al conectar con la base de datos SQLite: {e}")
+
 
 # Crear tablas si no existen
 c.execute('''
@@ -474,10 +479,10 @@ def register_screen():
 def login_screen():
     username = get_input_text("Ingrese nombre de usuario:")
     password = get_input_text("Ingrese contraseña:")
-
+    
     c.execute('SELECT user_id FROM User WHERE username = ? AND password = ?', (username, password))
     user = c.fetchone()
-
+    
     if user:
         print(f"Usuario {username} ha iniciado sesión correctamente.")
         main_menu(user[0])

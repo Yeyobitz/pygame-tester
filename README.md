@@ -1,9 +1,14 @@
 # FantasyMichiHats
 
+## Instrucciones de instalación
+Presionar en <CODE> arriba a la derecha en el github y descargar como Zip.
+Extraer y seguir las instrucciones
+
 ## Ejecutar Juego
-1. Entrar a la carpeta dist/pygameIndex
-2. Ejecutar pygameIndex.exe
-3. Puede que Windows Defender de alerta, si es así, presionar en "Más información" y luego en "Ejecutar". No es un virus, puede leer el código fuente cuando quiera.
+1. Entrar en la carpeta extraida
+2. Entrar a la carpeta dist/pygameIndex
+3. Ejecutar pygameIndex.exe
+`Nota` Puede que Windows Defender de alerta, si es así, presionar en "Más información" y luego en "Ejecutar". No es un virus, puede leer el código fuente cuando quiera.
 
 ## Registro de Usuario
 

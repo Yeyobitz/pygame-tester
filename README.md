@@ -1,5 +1,10 @@
 # FantasyMichiHats
 
+## Ejecutar Juego
+1. Entrar a la carpeta dist/pygameIndex
+2. Ejecutar pygameIndex.exe
+3. Puede que Windows Defender de alerta, si es así, presionar en "Más información" y luego en "Ejecutar". No es un virus, puede leer el código fuente cuando quiera.
+
 ## Registro de Usuario
 
 ### Paso 1: Registrar

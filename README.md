@@ -1,7 +1,7 @@
 # FantasyMichiHats
 
 ## Instrucciones de instalación
-Presionar en <CODE> arriba a la derecha en el github y descargar como Zip.
+Presionar en  `CODE` arriba a la derecha en el github y descargar como Zip.
 Extraer y seguir las instrucciones
 
 ## Ejecutar Juego

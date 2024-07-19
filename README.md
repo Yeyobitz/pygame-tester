@@ -1,18 +1,35 @@
-# FANTASYMICHIHATS
+# FantasyMichiHats
 
-Proyecto para taller de aplicaciones 3er semestre carrera analista programador
-Fantasy Michi hats
-entrega de MVP prototipo ejecutable en python
-(videojuego en pygame)
-Videojuego tipo tower defense 2d
-con la finalidad de crear un catalogo de gorros para gatos de la empresa cliente.
+## Registro de Usuario
 
-  ENTORNO DE TRABAJO:
-  
-  - Descargar SQlite : (https://www.sqlite.org/download.html)
-  - Descargar DB Brownser (https://download.sqlitebrowser.org/DB.Browser.for.SQLite-3.12.2-win64.msi)
-  - Generador ejecutable .exe para python:
-    - En consola:  pip install pyinstaller (instala modulo empaquetador pyinstaller )
-    - pyinstaller -v (muestra la version y verifica que quedo bien instalado)
-    - pyinstaller --onefile pygameindex.py (empaqueta el proyecto y crea una carpeta con el ejecutable .exe)
-      - agregar todos los archivos de assets necesarios para el proyecto a la carpeta "dist"
+### Paso 1: Registrar
+1. Presiona el botón de “Registrar”.
+2. Ingresa nombre de usuario, contraseña y email.
+
+### Paso 2: Iniciar Sesión
+1. Después de registrarte, se te pedirá que ingreses tu nombre de usuario y contraseña.
+
+## Menú Principal
+En el menú principal, puedes realizar las siguientes acciones:
+- **Jugar**
+- **Modificar Cuenta**
+- **Salir**
+
+## Modificar Cuenta
+Puedes cambiar tu contraseña y email desde esta sección.
+
+## Jugar
+1. Escribe tu nombre que verás dentro del juego.
+2. Con los botones `1`, `2`, `3` elige tu clase de Michi y el sombrero que llevará puesto.
+
+### Controles del Juego
+- **Disparar**: Presiona la tecla `Espacio` para disparar.
+- No dejes que se te escape ningún enemigo. ¿Hasta qué nivel llegarás?
+
+---
+
+**Nota**: Asegúrate de que todos los archivos de recursos estén en el directorio correcto para evitar errores de carga.
+
+---
+
+¡Diviértete jugando a FantasyMichiHats!

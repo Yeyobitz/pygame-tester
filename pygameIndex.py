@@ -23,7 +23,7 @@ BLACK = (0, 0, 0)
 font = pygame.font.SysFont(None, 36)
 
 # Determinar la ruta base
-base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+base_path = os.path.join(getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__))), 'Assets')
 
 # Cargar imágenes
 cat_image = pygame.image.load(os.path.join(base_path, 'cat.png'))

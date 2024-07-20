@@ -159,6 +159,8 @@ enemies_defeated = 0
 win_condition = 10  # Cantidad de enemigos que deben ser eliminados para ganar el nivel
 enemies_escaped = 0
 lost_condition = 10  # Cantidad de enemigos que deben escapar para perder el nivel
+paused = False
+
 
 # Clases
 class Character:
@@ -493,7 +495,9 @@ def login_screen():
 def main_menu(user_id):
     while True:
         screen.fill(WHITE)
-        title_text = font.render("Main Menu", True, BLACK)
+        screen.blit(menu_background_image, (0, 0))  # Asumiendo que tienes una imagen de fondo para el menú
+
+        title_text = font.render("FantasyMichiHats", True, BLACK)
         screen.blit(title_text, (SCREEN_WIDTH // 2 - title_text.get_width() // 2, 100))
 
         play_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, 250, 200, 50)
@@ -519,6 +523,17 @@ def main_menu(user_id):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if play_button.collidepoint(event.pos):
                     main(user_id)  # Iniciar el juego
+                    # Después de que main() retorna (al volver al menú principal), 
+                    # necesitamos reinicializar algunas variables globales
+                    global enemies, projectiles, towers, characters, paused
+                    enemies = []
+                    projectiles = []
+                    towers = []
+                    characters = []
+                    paused = False
+                    current_map = 0
+                    enemies_defeated = 0
+                    enemies_escaped = 0
                 if modify_button.collidepoint(event.pos):
                     modify_account_screen(user_id)  # Modificar cuenta
                 if exit_button.collidepoint(event.pos):
@@ -526,6 +541,7 @@ def main_menu(user_id):
                     sys.exit()
 
         pygame.display.flip()
+        pygame.time.Clock().tick(60)
 
 def modify_account_screen(user_id):
     new_password = get_input_text("Ingrese nueva contraseña:")
@@ -575,6 +591,28 @@ def get_player_name():
         
         pygame.display.flip()
         pygame.time.Clock().tick(30)
+        
+def draw_pause_menu():
+    overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+    overlay.set_alpha(128)
+    overlay.fill((0, 0, 0))
+    screen.blit(overlay, (0, 0))
+
+    draw_text("PAUSA", font, WHITE, screen, SCREEN_WIDTH // 2 - 50, SCREEN_HEIGHT // 2 - 150)
+
+    continue_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 50, 200, 50)
+    main_menu_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 25, 200, 50)
+    exit_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 100, 200, 50)
+
+    pygame.draw.rect(screen, WHITE, continue_button)
+    pygame.draw.rect(screen, WHITE, main_menu_button)
+    pygame.draw.rect(screen, WHITE, exit_button)
+
+    draw_text("Continuar", font, BLACK, screen, continue_button.x + 50, continue_button.y + 15)
+    draw_text("Menú Principal", font, BLACK, screen, main_menu_button.x + 20, main_menu_button.y + 15)
+    draw_text("Salir", font, BLACK, screen, exit_button.x + 75, exit_button.y + 15)
+
+    return continue_button, main_menu_button, exit_button
 
 def switch_map():
     global current_map, enemies, projectiles
@@ -583,7 +621,7 @@ def switch_map():
     projectiles = []
 
 def main(user_id):
-    global last_enemy_spawn_time, enemies_defeated, enemies_escaped
+    global last_enemy_spawn_time, enemies_defeated, enemies_escaped, paused
     clock = pygame.time.Clock()
 
     # Obtener el nombre del jugador
@@ -600,8 +638,8 @@ def main(user_id):
         create_character(player_name, selected_class, selected_equipment)
 
     # Crear torres iniciales
-    towers.append(Tower(200, 300))
-    towers.append(Tower(400, 300))
+    towers.append(Tower(10, 300))
+    #towers.append(Tower(400, 300))
 
     # Colocar el personaje sobre la primera torre
     if characters:
@@ -615,55 +653,68 @@ def main(user_id):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and characters:
                     characters[0].shoot()
-        
-        # Dibujar fondo
-        screen.blit(background_images[current_map], (0, 0))
+                elif event.key == pygame.K_p:
+                    paused = not paused  # Alternar el estado de pausa
+            elif event.type == pygame.MOUSEBUTTONDOWN and paused:
+                if continue_button.collidepoint(event.pos):
+                    paused = False
+                elif main_menu_button.collidepoint(event.pos):
+                    return  # Volver al menú principal
+                elif exit_button.collidepoint(event.pos):
+                    pygame.quit()
+                    sys.exit()
 
-        # Dibujar y atacar con torres
-        for tower in towers:
-            tower.draw(screen)
+        if not paused:
+            # Dibujar fondo
+            screen.blit(background_images[current_map], (0, 0))
 
-        # Crear oleadas de enemigos
-        current_time = pygame.time.get_ticks()
-        if current_time - last_enemy_spawn_time > enemy_spawn_time:
-            create_enemy()
-            last_enemy_spawn_time = current_time
+            # Dibujar y atacar con torres
+            for tower in towers:
+                tower.draw(screen)
 
-        # Mover y dibujar enemigos
-        for enemy in enemies:
-            enemy.move()
-            enemy.draw(screen)
+            # Crear oleadas de enemigos
+            current_time = pygame.time.get_ticks()
+            if current_time - last_enemy_spawn_time > enemy_spawn_time:
+                create_enemy()
+                last_enemy_spawn_time = current_time
 
-        # Mover y dibujar proyectiles
-        for projectile in projectiles:
-            projectile.move()
-            projectile.draw(screen)
+            # Mover y dibujar enemigos
+            for enemy in enemies:
+                enemy.move()
+                enemy.draw(screen)
 
-        # Dibujar personaje
-        if characters:
-            characters[0].draw(screen)
-            draw_text(f'Nombre: {characters[0].name}', font, BLACK, screen, 20, 20)
-            draw_text(f'Clase: {characters[0].char_class}', font, BLACK, screen, 20, 60)
-            draw_text(f'Nivel: {characters[0].level}', font, BLACK, screen, 20, 100)
-            draw_text(f'Experiencia: {characters[0].experience}', font, BLACK, screen, 20, 140)
+            # Mover y dibujar proyectiles
+            for projectile in projectiles:
+                projectile.move()
+                projectile.draw(screen)
 
-        # Verificar condición de victoria
-        if enemies_defeated >= win_condition:
-            draw_text("¡Victoria!", font, BLACK, screen, SCREEN_WIDTH // 2 - 50, SCREEN_HEIGHT // 2)
-            pygame.display.flip()
-            pygame.time.wait(3000)  # Espera 3 segundos antes de cambiar el mapa
-            enemies_defeated = 0
-            switch_map()
+            # Dibujar personaje
+            if characters:
+                characters[0].draw(screen)
+                draw_text(f'Nombre: {characters[0].name}', font, BLACK, screen, 20, 20)
+                draw_text(f'Clase: {characters[0].char_class}', font, BLACK, screen, 20, 60)
+                draw_text(f'Nivel: {characters[0].level}', font, BLACK, screen, 20, 100)
+                draw_text(f'Experiencia: {characters[0].experience}', font, BLACK, screen, 20, 140)
 
-        # Verificar condición de derrota
-        if enemies_escaped >= lost_condition:
-            draw_text("¡Derrota!", font, BLACK, screen, SCREEN_WIDTH // 2 - 50, SCREEN_HEIGHT // 2)
-            pygame.display.flip()
-            pygame.time.wait(3000)  # Espera 3 segundos antes de salir
-            pygame.quit()
-            sys.exit()
-        
-        
+            # Verificar condición de victoria
+            if enemies_defeated >= win_condition:
+                draw_text("¡Victoria!", font, BLACK, screen, SCREEN_WIDTH // 2 - 50, SCREEN_HEIGHT // 2)
+                pygame.display.flip()
+                pygame.time.wait(3000)  # Espera 3 segundos antes de cambiar el mapa
+                enemies_defeated = 0
+                switch_map()
+
+            # Verificar condición de derrota
+            if enemies_escaped >= lost_condition:
+                draw_text("¡Derrota!", font, BLACK, screen, SCREEN_WIDTH // 2 - 50, SCREEN_HEIGHT // 2)
+                pygame.display.flip()
+                pygame.time.wait(3000)  # Espera 3 segundos antes de salir
+                pygame.quit()
+                sys.exit()
+
+        if paused:
+            continue_button, main_menu_button, exit_button = draw_pause_menu()
+
         pygame.display.flip()
         clock.tick(60)
 
